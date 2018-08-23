@@ -1,9 +1,11 @@
 import os
+import time
 from tkinter import *
 import tkinter.filedialog
 import tkinter.messagebox
 import parameter
 import cmd
+import _thread
 
 
 class GUI:
@@ -13,6 +15,7 @@ class GUI:
     __str_parameter = None
     __str_partitions = {}   # {'boot':[True, '<path>', '<status>']}
     __is_select_all = None
+    __str_usb_status = None
 
     __base_row = 0
     __cur_row = 0
@@ -28,13 +31,23 @@ class GUI:
         self.__str_loader = StringVar(self.__root)
         self.__str_parameter = StringVar(self.__root)
         self.__is_select_all = BooleanVar(self.__root)
+        self.__str_usb_status = StringVar(self.__root)
         self.__draw_base_elements()
+
+        _thread.start_new_thread(self.__thread_check_usb, ())
 
     def mainloop(self):
         self.__root.mainloop()
 
+    def __thread_check_usb(self):
+        while True:
+            ret, res = cmd.list_device()
+            self.__str_usb_status.set(res)
+            time.sleep(1)
+
     def __draw_base_elements(self):
-        Button(self.__root, text='Load Firmwares From Folder', command=self.__on_load_firmware_folder).grid(row=self.__cur_row, column=0, padx=5, pady=5, columnspan=5, sticky='W')
+        Button(self.__root, text='Load Firmwares From Folder', command=self.__on_load_firmware_folder).grid(row=self.__cur_row, column=0, padx=5, pady=5, columnspan=2, sticky='W')
+        Label(self.__root, textvariable=self.__str_usb_status).grid(row=self.__cur_row, column=2, padx=5, pady=5, columnspan=3, sticky='E')
         self.__cur_row += 1
         self.__base_row += 1
 
@@ -57,7 +70,7 @@ class GUI:
         pk.grid(row=self.__cur_row, column=1, padx=5, pady=5, columnspan=4)
         Button(pk, text='Reload Parameter', command=self.__on_reload_parameter).grid(row=self.__cur_row, column=1, padx=5, pady=5)
         Button(pk, text='Reset Device', command=self.__on_reset_device).grid(row=self.__cur_row, column=2, padx=5, pady=5)
-        Button(pk, text='Write Selected LBAs').grid(row=self.__cur_row, column=3, padx=5, pady=5)
+        Button(pk, text='Write Selected LBAs', command=self.__on_write_selected_lbas).grid(row=self.__cur_row, column=3, padx=5, pady=5)
         self.__cur_row += 1
         self.__base_row += 1
 
@@ -146,3 +159,18 @@ class GUI:
         else:
             for val in parts.keys():
                 parts[val][0].set(False)
+
+    def __on_write_selected_lbas(self):
+        parts = self.__str_partitions
+        partitions = self.__parameter_parser.partitions
+
+        for k in parts.keys():
+            if parts[k][0].get():
+                parts[k][2].set('Writing ...')
+                ret, res = cmd.write_lba_bysec(partitions[k][1], parts[k][1].get())
+                if ret == 0:
+                    parts[k][2].set('Success')
+                else:
+                    parts[k][2].set('Failed')
+                    tkinter.messagebox.showerror(title='Failed', message='writing lba error!\n' + res)
+                    return

@@ -3,7 +3,7 @@ import re
 
 class ParameterParser:
     _file = None
-    partitions = {}
+    partitions = {}  # {name: [size, addr]}
 
     def __init__(self, path):
         _file = open(path, mode='r', encoding='utf-8')
