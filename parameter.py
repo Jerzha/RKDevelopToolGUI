@@ -30,7 +30,7 @@ class ParameterParser:
             self.partitions[name] = [siz, addr]
 
     def __parse_cmdline_partition_name(self, partition):
-        obj = re.search('(\w+)@(\w+)\((\w+)\)', partition)
+        obj = re.search('(\S+)@(\w+)\((\w+)\)', partition)
         if obj:
             return obj.group(1), obj.group(2), obj.group(3)
         else:
