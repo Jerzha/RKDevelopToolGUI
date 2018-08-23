@@ -77,11 +77,20 @@ class GUI:
 
     def __on_load_firmware_folder(self):
         path = tkinter.filedialog.askdirectory()
-        if path:
-            if not os.path.exists(path + '/parameter.txt'):
-                tkinter.messagebox.showerror(title='Parameter Not Found', message='parameter.txt not found !', icon="warning")
-                return
-            self.__fill_parameter(path + '/parameter.txt')
+        if not path:
+            return
+
+        if not os.path.exists(path + '/parameter.txt'):
+            tkinter.messagebox.showerror(title='Parameter Not Found', message='parameter.txt not found !', icon="warning")
+            return
+        self.__fill_parameter(path + '/parameter.txt')
+
+        partitions = self.__str_partitions
+        for part in partitions.keys():
+            img = path + '/' + part + '.img'
+            if os.path.exists(img):
+                partitions[part][0].set(True)
+                partitions[part][1].set(img)
 
 
     def __on_upgrade_loader(self):
