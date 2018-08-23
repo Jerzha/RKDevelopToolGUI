@@ -3,6 +3,7 @@ from tkinter import *
 import tkinter.filedialog
 import tkinter.messagebox
 import parameter
+import cmd
 
 
 class GUI:
@@ -11,44 +12,52 @@ class GUI:
     __str_loader = None
     __str_parameter = None
     __str_partitions = {}   # {'boot':[True, '<path>', '<status>']}
+    __is_select_all = None
 
     __base_row = 0
     __cur_row = 0
 
     def __init__(self):
+        ret, ver = cmd.version()
+        if ret != 0:
+            tkinter.messagebox.showerror(title='Error', message='rkdeveloptool running error!\n' + ver)
+            exit(0)
+
         self.__root = Tk()
-        self.__root.title("Rockchip DevelopTool GUI")
+        self.__root.title("Rockchip DevelopTool GUI  (" + ver + ")")
         self.__str_loader = StringVar(self.__root)
         self.__str_parameter = StringVar(self.__root)
+        self.__is_select_all = BooleanVar(self.__root)
         self.__draw_base_elements()
 
     def mainloop(self):
         self.__root.mainloop()
 
     def __draw_base_elements(self):
-        Button(self.__root, text='Load From Firmware Folder', command=self.__on_load_firmware_folder).grid(row=self.__cur_row, column=0, padx=5, pady=5, columnspan=1)
+        Button(self.__root, text='Load Firmwares From Folder', command=self.__on_load_firmware_folder).grid(row=self.__cur_row, column=0, padx=5, pady=5, columnspan=5, sticky='W')
         self.__cur_row += 1
         self.__base_row += 1
 
-        Label(self.__root, text='Loader: ').grid(row=self.__cur_row, column=0, padx=10, pady=5)
+        Label(self.__root, text='Loader: ').grid(row=self.__cur_row, column=0, padx=10, pady=5, sticky='W')
         Entry(self.__root, textvariable=self.__str_loader, width=50).grid(row=self.__cur_row, column=1, padx=10, pady=5, columnspan=2)
-        Button(self.__root, text='...').grid(row=self.__cur_row, column=3, padx=1, pady=5)
+        Button(self.__root, text='...', command=self.__on_load_loader).grid(row=self.__cur_row, column=3, padx=1, pady=5)
         Button(self.__root, text='Upgrade Loader', command=self.__on_upgrade_loader).grid(row=self.__cur_row, column=4, padx=5, pady=5)
         self.__cur_row += 1
         self.__base_row += 1
 
-        Label(self.__root, text='Parameter: ').grid(row=self.__cur_row, column=0, padx=10, pady=5)
+        Label(self.__root, text='Parameter: ').grid(row=self.__cur_row, column=0, padx=10, pady=5, sticky='W')
         Entry(self.__root, textvariable=self.__str_parameter, width=50).grid(row=self.__cur_row, column=1, padx=10, pady=5, columnspan=2)
         Button(self.__root, text='...', command=self.__on_load_parameter).grid(row=self.__cur_row, column=3, padx=1, pady=5)
         Button(self.__root, text='Write Parameter').grid(row=self.__cur_row, column=4, padx=5, pady=5)
         self.__cur_row += 1
         self.__base_row += 1
 
-        Button(self.__root, text='Select All').grid(row=self.__cur_row, column=0, padx=5, pady=5)
-
-        Button(self.__root, text='Reload Parameter', command=self.__on_reload_parameter).grid(row=self.__cur_row, column=2, padx=5, pady=5)
-        Button(self.__root, text='Reset Device').grid(row=self.__cur_row, column=3, padx=5, pady=5)
-        Button(self.__root, text='Write LBA').grid(row=self.__cur_row, column=4, padx=5, pady=5)
+        Checkbutton(self.__root, text='Select All', variable=self.__is_select_all, command=self.__on_select_all).grid(row=self.__cur_row, column=0, sticky='W', padx=10, pady=5)
+        pk = Frame(self.__root)
+        pk.grid(row=self.__cur_row, column=1, padx=5, pady=5, columnspan=4)
+        Button(pk, text='Reload Parameter', command=self.__on_reload_parameter).grid(row=self.__cur_row, column=1, padx=5, pady=5)
+        Button(pk, text='Reset Device', command=self.__on_reset_device).grid(row=self.__cur_row, column=2, padx=5, pady=5)
+        Button(pk, text='Write Selected LBAs').grid(row=self.__cur_row, column=3, padx=5, pady=5)
         self.__cur_row += 1
         self.__base_row += 1
 
@@ -61,12 +70,12 @@ class GUI:
                 StringVar(self.__root)      # Status
             ]
 
-            Checkbutton(self.__root, text=kv, variable=self.__str_partitions[kv][0], onvalue=True, offvalue=False).grid(row=self.__cur_row, column=0, sticky='W')
+            Checkbutton(self.__root, text=kv, variable=self.__str_partitions[kv][0]).grid(row=self.__cur_row, column=0, sticky='W', padx=10, pady=5)
             Label(self.__root, text=parts[kv][1]).grid(row=self.__cur_row, column=1)
             Entry(self.__root, textvariable=self.__str_partitions[kv][1], width=35).grid(row=self.__cur_row, column=2, padx=10, pady=5)
             Button(self.__root, text='...', command=self.__load_partition_handler(kv)).grid(row=self.__cur_row, column=3, padx=1, pady=5)
             Label(self.__root, textvariable=self.__str_partitions[kv][2]).grid(row=self.__cur_row, column=4)
-            self.__str_partitions[kv][2].set('waiting')
+            self.__str_partitions[kv][2].set('No File')
             self.__cur_row += 1
 
     def __remove_partition_elements(self):
@@ -75,13 +84,16 @@ class GUI:
             for w in widgets:
                 w.grid_forget()
 
+    def __on_reset_device(self):
+        ret, str = cmd.reset_device()
+
     def __on_load_firmware_folder(self):
         path = tkinter.filedialog.askdirectory()
         if not path:
             return
 
         if not os.path.exists(path + '/parameter.txt'):
-            tkinter.messagebox.showerror(title='Parameter Not Found', message='parameter.txt not found !', icon="warning")
+            tkinter.messagebox.showwarning(title='Parameter Not Found', message='parameter.txt not found !')
             return
         self.__fill_parameter(path + '/parameter.txt')
 
@@ -91,7 +103,12 @@ class GUI:
             if os.path.exists(img):
                 partitions[part][0].set(True)
                 partitions[part][1].set(img)
+                partitions[part][2].set('Ready')
 
+    def __on_load_loader(self):
+        path = tkinter.filedialog.askopenfilename()
+        if path != '':
+            self.__str_loader.set(path)
 
     def __on_upgrade_loader(self):
         pass
@@ -119,3 +136,13 @@ class GUI:
             if a != '':
                 self.__str_partitions[k][2].set('ready')
         return on_load_partition
+
+    def __on_select_all(self):
+        print(self.__is_select_all.get())
+        parts = self.__str_partitions
+        if self.__is_select_all.get():
+            for val in parts.keys():
+                parts[val][0].set(True)
+        else:
+            for val in parts.keys():
+                parts[val][0].set(False)
