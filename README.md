@@ -1,4 +1,4 @@
-# RKDevelopToolGUIForMac
-Rockchip develop tool for mac GUI 
+# RKDevelopToolGUI (for unix/linux/macos)
+Rockchip develop tool by python3 tkinter
 
-## TBD very soon
+## coming soon
