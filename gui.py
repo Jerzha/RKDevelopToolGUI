@@ -39,6 +39,22 @@ class GUI:
     def mainloop(self):
         self.__root.mainloop()
 
+    def load_image_path(self, path):
+        if path is None or path == '':
+            return
+
+        self.__fill_parameter(path + '/parameter.txt')
+        if os.path.exists(path + '/MiniLoaderAll.bin'):
+            self.__str_loader.set(path + '/MiniLoaderAll.bin')
+
+        partitions = self.__str_partitions
+        for part in partitions.keys():
+            img = path + '/' + part + '.img'
+            if os.path.exists(img):
+                partitions[part][0].set(True)
+                partitions[part][1].set(img)
+                partitions[part][2].set('Ready')
+
     def __thread_check_usb(self):
         while True:
             ret, res = cmd.list_device()
@@ -67,7 +83,7 @@ class GUI:
 
         Checkbutton(self.__root, text='Select All', variable=self.__is_select_all, command=self.__on_select_all).grid(row=self.__cur_row, column=0, sticky='W', padx=10, pady=5)
         pk = Frame(self.__root)
-        pk.grid(row=self.__cur_row, column=1, padx=5, pady=5, columnspan=4)
+        pk.grid(row=self.__cur_row, column=1, padx=5, pady=5, columnspan=4, sticky='E')
         Button(pk, text='Reload Parameter', command=self.__on_reload_parameter).grid(row=self.__cur_row, column=1, padx=5, pady=5)
         Button(pk, text='Reset Device', command=self.__on_reset_device).grid(row=self.__cur_row, column=2, padx=5, pady=5)
         Button(pk, text='Write Selected LBAs', command=self.__on_write_selected_lbas).grid(row=self.__cur_row, column=3, padx=5, pady=5)
@@ -108,15 +124,8 @@ class GUI:
         if not os.path.exists(path + '/parameter.txt'):
             tkinter.messagebox.showwarning(title='Parameter Not Found', message='parameter.txt not found !')
             return
-        self.__fill_parameter(path + '/parameter.txt')
 
-        partitions = self.__str_partitions
-        for part in partitions.keys():
-            img = path + '/' + part + '.img'
-            if os.path.exists(img):
-                partitions[part][0].set(True)
-                partitions[part][1].set(img)
-                partitions[part][2].set('Ready')
+        self.load_image_path(path)
 
     def __on_load_loader(self):
         path = tkinter.filedialog.askopenfilename()
@@ -124,7 +133,7 @@ class GUI:
             self.__str_loader.set(path)
 
     def __on_upgrade_loader(self):
-        pass
+        ret, res = cmd.upgrade_loader(self.__str_loader.get())
 
     def __on_load_parameter(self):
         a = tkinter.filedialog.askopenfilename()
