@@ -9,7 +9,9 @@ from setuptools import setup
 
 APP = ['run.py']
 DATA_FILES = ['parameter.py', 'gui.py', 'cmd.py', 'rkdeveloptool']
-OPTIONS = {}
+OPTIONS = {
+    'iconfile': 'logo.icns'
+}
 
 setup(
     app=APP,
