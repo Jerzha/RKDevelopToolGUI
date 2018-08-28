@@ -6,6 +6,7 @@ import tkinter.messagebox
 import parameter
 import cmd
 import _thread
+import re
 
 
 class GUI:
@@ -170,16 +171,25 @@ class GUI:
                 parts[val][0].set(False)
 
     def __on_write_selected_lbas(self):
+        _thread.start_new_thread(self.__thread_write_selected_lbas, ())
+
+    def __thread_write_selected_lbas(self):
         parts = self.__str_partitions
         partitions = self.__parameter_parser.partitions
 
         for k in parts.keys():
             if parts[k][0].get():
                 parts[k][2].set('Writing ...')
-                ret, res = cmd.write_lba_bysec(partitions[k][1], parts[k][1].get())
-                if ret == 0:
+                p = cmd.write_lba_bysec_async(partitions[k][1], parts[k][1].get())
+
+                while p.poll() is None:
+                    line = p.stdout.readline()
+                    obj = re.search('\((\d+)%\)', str(line))
+                    parts[k][2].set("Writing " + obj.group(0))
+
+                if p.returncode == 0:
                     parts[k][2].set('Success')
                 else:
                     parts[k][2].set('Failed')
-                    tkinter.messagebox.showerror(title='Failed', message='writing lba error!\n' + res)
+                    tkinter.messagebox.showerror(title='Failed', message='writing lba error!\n')
                     return
