@@ -78,7 +78,7 @@ class GUI:
         Label(self.__root, text='Parameter: ').grid(row=self.__cur_row, column=0, padx=10, pady=5, sticky='W')
         Entry(self.__root, textvariable=self.__str_parameter, width=50).grid(row=self.__cur_row, column=1, padx=10, pady=5, columnspan=2)
         Button(self.__root, text='...', command=self.__on_load_parameter).grid(row=self.__cur_row, column=3, padx=1, pady=5)
-        Button(self.__root, text='Write Parameter').grid(row=self.__cur_row, column=4, padx=5, pady=5)
+        Button(self.__root, text='Write Parameter', command=self.__on_writing_parameter).grid(row=self.__cur_row, column=4, padx=5, pady=5)
         self.__cur_row += 1
         self.__base_row += 1
 
@@ -135,6 +135,17 @@ class GUI:
 
     def __on_upgrade_loader(self):
         ret, res = cmd.upgrade_loader(self.__str_loader.get())
+        if ret == 0:
+            tkinter.messagebox.showinfo("Success", "Upgrade loader success.")
+        else:
+            tkinter.messagebox.showerror("Failure", "Upgrade loader failure.")
+
+    def __on_writing_parameter(self):
+        ret, res = cmd.write_parameter(self.__str_parameter.get())
+        if ret == 0:
+            tkinter.messagebox.showinfo("Success", "Writing parameter success.")
+        else:
+            tkinter.messagebox.showerror("Failure", "Writing parameter failure.")
 
     def __on_load_parameter(self):
         a = tkinter.filedialog.askopenfilename()
@@ -171,6 +182,10 @@ class GUI:
                 parts[val][0].set(False)
 
     def __on_write_selected_lbas(self):
+        parts = self.__str_partitions
+        for k in parts.keys():
+            if parts[k][0].get():
+                parts[k][2].set('Waiting')
         _thread.start_new_thread(self.__thread_write_selected_lbas, ())
 
     def __thread_write_selected_lbas(self):
