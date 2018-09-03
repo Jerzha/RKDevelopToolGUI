@@ -7,6 +7,6 @@ Rockchip develop tool by python3 tkinter
 ## Build
 python3 setup.py py2app
 
----
+## Demo
 ![avatar](/demo/demo1.png)
 
