@@ -14,7 +14,7 @@ elif sys.version_info.major == 3:
     from tkinter import *
     import _thread as thread
 import parameter
-import cmd
+import rkcmd
 import re
 
 
@@ -31,13 +31,13 @@ class GUI:
     __cur_row = 0
 
     def __init__(self):
-        ret, ver = cmd.version()
+        ret, ver = rkcmd.version()
         if ret != 0:
-            tk.messagebox.showerror(title='Error', message='rkdeveloptool running error!\n' + ver)
+            tkMessageBox.showerror(title='Error', message='rkdeveloptool running error!\n' + ver)
             exit(0)
 
         self.__root = tk.Tk()
-        self.__root.title("Rockchip DevelopTool GUI  (" + ver + ")")
+        self.__root.title("Rockchip DevelopTool GUI  (" + str(ver) + ")")
         self.__str_loader = tk.StringVar(self.__root)
         self.__str_parameter = tk.StringVar(self.__root)
         self.__is_select_all = tk.BooleanVar(self.__root)
@@ -67,7 +67,7 @@ class GUI:
 
     def __thread_check_usb(self):
         while True:
-            ret, res = cmd.list_device()
+            ret, res = rkcmd.list_device()
             self.__str_usb_status.set(res)
             time.sleep(1)
 
@@ -124,7 +124,7 @@ class GUI:
                 w.grid_forget()
 
     def __on_reset_device(self):
-        ret, str = cmd.reset_device()
+        ret, str = rkcmd.reset_device()
 
     def __on_load_firmware_folder(self):
         path = tkFileDialog.askdirectory()
@@ -143,14 +143,14 @@ class GUI:
             self.__str_loader.set(path)
 
     def __on_upgrade_loader(self):
-        ret, res = cmd.upgrade_loader(self.__str_loader.get())
+        ret, res = rkcmd.upgrade_loader(self.__str_loader.get())
         if ret == 0:
             tkMessageBox.showinfo("Success", "Upgrade loader success.")
         else:
             tkMessageBox.showerror("Failure", "Upgrade loader failure.")
 
     def __on_writing_parameter(self):
-        ret, res = cmd.write_parameter(self.__str_parameter.get())
+        ret, res = rkcmd.write_parameter(self.__str_parameter.get())
         if ret == 0:
             tkMessageBox.showinfo("Success", "Writing parameter success.")
         else:
@@ -204,7 +204,7 @@ class GUI:
         for k in parts.keys():
             if parts[k][0].get():
                 parts[k][2].set('Writing ...')
-                p = cmd.write_lba_bysec_async(partitions[k][1], parts[k][1].get())
+                p = rkcmd.write_lba_bysec_async(partitions[k][1], parts[k][1].get())
 
                 while p.poll() is None:
                     line = p.stdout.readline()

@@ -8,7 +8,7 @@ Usage:
 from setuptools import setup
 
 APP = ['run.py']
-DATA_FILES = ['parameter.py', 'gui.py', 'cmd.py', 'rkdeveloptool']
+DATA_FILES = ['parameter.py', 'gui.py', 'rkcmd.py', 'rkdeveloptool']
 OPTIONS = {
     'iconfile': 'logo.icns'
 }
