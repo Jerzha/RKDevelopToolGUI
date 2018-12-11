@@ -1,13 +1,16 @@
 import re
-
+import sys
 
 class ParameterParser:
     _file = None
     partitions = {}  # {name: [size, addr]}
 
     def __init__(self, path):
-        _file = open(path, mode='r', encoding='utf-8')
-        for line in _file:
+        if sys.version_info.major == 2:
+            self._file = open(path, mode='r')
+        elif sys.version_info.major == 3:
+            self._file = open(path, mode='r', encoding='utf-8')
+        for line in self._file:
             print(line.strip())
             if line.startswith('CMDLINE:'):
                 self.__parse_cmdline(line)

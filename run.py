@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 import os
-
 import gui
 
 if __name__ == '__main__':

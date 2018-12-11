@@ -1,11 +1,20 @@
 import os
 import time
-from tkinter import *
-import tkinter.filedialog
-import tkinter.messagebox
+import sys
+if sys.version_info.major == 2:
+    import Tkinter as tk
+    import tkFileDialog as tkFileDialog
+    import tkMessageBox as tkMessageBox
+    from Tkinter import *
+    import thread
+elif sys.version_info.major == 3:
+    import tkinter as tk
+    import tkinter.filedialog as tkFileDialog
+    import tkinter.messagebox as tkMessageBox
+    from tkinter import *
+    import _thread as thread
 import parameter
 import cmd
-import _thread
 import re
 
 
@@ -24,18 +33,18 @@ class GUI:
     def __init__(self):
         ret, ver = cmd.version()
         if ret != 0:
-            tkinter.messagebox.showerror(title='Error', message='rkdeveloptool running error!\n' + ver)
+            tk.messagebox.showerror(title='Error', message='rkdeveloptool running error!\n' + ver)
             exit(0)
 
-        self.__root = Tk()
+        self.__root = tk.Tk()
         self.__root.title("Rockchip DevelopTool GUI  (" + ver + ")")
-        self.__str_loader = StringVar(self.__root)
-        self.__str_parameter = StringVar(self.__root)
-        self.__is_select_all = BooleanVar(self.__root)
-        self.__str_usb_status = StringVar(self.__root)
+        self.__str_loader = tk.StringVar(self.__root)
+        self.__str_parameter = tk.StringVar(self.__root)
+        self.__is_select_all = tk.BooleanVar(self.__root)
+        self.__str_usb_status = tk.StringVar(self.__root)
         self.__draw_base_elements()
 
-        _thread.start_new_thread(self.__thread_check_usb, ())
+        thread.start_new_thread(self.__thread_check_usb, ())
 
     def mainloop(self):
         self.__root.mainloop()
@@ -118,37 +127,37 @@ class GUI:
         ret, str = cmd.reset_device()
 
     def __on_load_firmware_folder(self):
-        path = tkinter.filedialog.askdirectory()
+        path = tkFileDialog.askdirectory()
         if not path:
             return
 
         if not os.path.exists(path + '/parameter.txt'):
-            tkinter.messagebox.showwarning(title='Parameter Not Found', message='parameter.txt not found !')
+            tkMessageBox.showwarning(title='Parameter Not Found', message='parameter.txt not found !')
             return
 
         self.load_image_path(path)
 
     def __on_load_loader(self):
-        path = tkinter.filedialog.askopenfilename()
+        path = tkFileDialog.askopenfilename()
         if path != '':
             self.__str_loader.set(path)
 
     def __on_upgrade_loader(self):
         ret, res = cmd.upgrade_loader(self.__str_loader.get())
         if ret == 0:
-            tkinter.messagebox.showinfo("Success", "Upgrade loader success.")
+            tkMessageBox.showinfo("Success", "Upgrade loader success.")
         else:
-            tkinter.messagebox.showerror("Failure", "Upgrade loader failure.")
+            tkMessageBox.showerror("Failure", "Upgrade loader failure.")
 
     def __on_writing_parameter(self):
         ret, res = cmd.write_parameter(self.__str_parameter.get())
         if ret == 0:
-            tkinter.messagebox.showinfo("Success", "Writing parameter success.")
+            tkMessageBox.showinfo("Success", "Writing parameter success.")
         else:
-            tkinter.messagebox.showerror("Failure", "Writing parameter failure.")
+            tkMessageBox.showerror("Failure", "Writing parameter failure.")
 
     def __on_load_parameter(self):
-        a = tkinter.filedialog.askopenfilename()
+        a = tkFileDialog.askopenfilename()
         self.__fill_parameter(a)
 
     def __fill_parameter(self, path):
@@ -165,7 +174,7 @@ class GUI:
 
     def __load_partition_handler(self, key):
         def on_load_partition(k=key):
-            a = tkinter.filedialog.askopenfilename()
+            a = tkFileDialog.askopenfilename()
             self.__str_partitions[k][1].set(a)
             if a != '':
                 self.__str_partitions[k][2].set('ready')
@@ -186,7 +195,7 @@ class GUI:
         for k in parts.keys():
             if parts[k][0].get():
                 parts[k][2].set('Waiting')
-        _thread.start_new_thread(self.__thread_write_selected_lbas, ())
+        thread.start_new_thread(self.__thread_write_selected_lbas, ())
 
     def __thread_write_selected_lbas(self):
         parts = self.__str_partitions
@@ -206,5 +215,5 @@ class GUI:
                     parts[k][2].set('Success')
                 else:
                     parts[k][2].set('Failed')
-                    tkinter.messagebox.showerror(title='Failed', message='writing lba error!\n')
+                    tkMessageBox.showerror(title='Failed', message='writing lba error!\n')
                     return
